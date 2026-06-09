@@ -28,7 +28,7 @@ jobs:
         DATABASE_URL: sqlite:///./test.db
         REDIS_URL: redis://localhost:6379/0
       run: |
-        pytest app/test_main.py
+        python -m pytest app/test_main.py
 
   build:
     needs: test
