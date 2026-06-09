@@ -1,0 +1,94 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: chat-db
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - chat-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: chat-redis
+    networks:
+      - chat-net
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  backend:
+    image: ${BACKEND_IMAGE:-backend-local}
+    build: .
+    container_name: chat-backend
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/0
+    networks:
+      - chat-net
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: always
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: chat-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    networks:
+      - chat-net
+    depends_on:
+      - backend
+    restart: always
+
+  nginx:
+    image: ${NGINX_IMAGE:-nginx-local}
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    container_name: chat-nginx
+    ports:
+      - "80:80"
+    networks:
+      - chat-net  
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: always
+
+volumes:
+  postgres_data:
+  prometheus_data:
+
+networks:
+  chat-net:
+    driver: bridge
