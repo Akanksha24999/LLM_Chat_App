@@ -5,7 +5,7 @@ A full-stack, real-time AI career counseling application powered by Google Gemin
 
 # Features
 
-- AI Career Counseling: Real-time chat integration with Gemini 1.5 Flash for career advice.
+- AI Career Counseling: Real-time chat integration with Gemini-3-flash-preview for career advice.
 - Persistent Chat Logs: Every conversation is stored in PostgreSQL for historical analysis.
 - High Performance: Redis integration for session management and caching.
 - Reverse Proxy: Nginx handles routing, serving the frontend, and managing WebSocket upgrades.
@@ -73,11 +73,11 @@ cd LLM_Chat_App
 2. Configure Environment Variables
 Create a .env file in the root directory and provide your Gemini API key and database credentials.
 
-Variable: Description 
-GEMINI_API_KEY: Your Google Gemini API Key 
-DB_USER: PostgreSQL Username
-DB_PASSWORD: PostgreSQL Password 
-DB_NAME: PostgreSQL Database Name 
+Variable | Description 
+GEMINI_API_KEY: Your Google Gemini API Key.
+DB_USER: PostgreSQL Username.
+DB_PASSWORD: PostgreSQL Password. 
+DB_NAME: PostgreSQL Database Name. 
 
 3. Build and Start Services
 Run the following command to build the images and start the containers in detached mode:
