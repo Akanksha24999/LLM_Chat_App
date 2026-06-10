@@ -68,39 +68,39 @@ jobs:
         push: true
         tags: ghcr.io/${{ steps.repo_name.outputs.lower }}/nginx:latest
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Create .env file for deployment
-      run: |
-        echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> deploy.env
-        echo "DB_USER=${{ secrets.DB_USER }}" >> deploy.env
-        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> deploy.env
-        echo "DB_NAME=${{ secrets.DB_NAME }}" >> deploy.env
-        echo "BACKEND_IMAGE=ghcr.io/${{ needs.build.outputs.repo_lower }}/backend:latest" >> deploy.env
-        echo "NGINX_IMAGE=ghcr.io/${{ needs.build.outputs.repo_lower }}/nginx:latest" >> deploy.env
-
-    - name: Copy files to EC2
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        source: "docker-compose.yml,prometheus.yml,deploy.env"
-        target: "~/app"
-
-    - name: Deploy to EC2 via SSH
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          cd ~/app
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker compose --env-file deploy.env pull
-          docker compose --env-file deploy.env up -d
-          rm deploy.env # Clean up env file after start
+#  deploy:
+#    needs: build
+#    runs-on: ubuntu-latest
+#    steps:
+#    - uses: actions/checkout@v3
+#
+#    - name: Create .env file for deployment
+#      run: |
+#        echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> deploy.env
+#        echo "DB_USER=${{ secrets.DB_USER }}" >> deploy.env
+#        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> deploy.env
+#        echo "DB_NAME=${{ secrets.DB_NAME }}" >> deploy.env
+#        echo "BACKEND_IMAGE=ghcr.io/${{ needs.build.outputs.repo_lower }}/backend:latest" >> deploy.env
+#        echo "NGINX_IMAGE=ghcr.io/${{ needs.build.outputs.repo_lower }}/nginx:latest" >> deploy.env
+#
+#    - name: Copy files to EC2
+#      uses: appleboy/scp-action@master
+#      with:
+#        host: ${{ secrets.EC2_HOST }}
+#        username: ${{ secrets.EC2_USER }}
+#        key: ${{ secrets.EC2_SSH_KEY }}
+#        source: "docker-compose.yml,prometheus.yml,deploy.env"
+#        target: "~/app"
+#
+#    - name: Deploy to EC2 via SSH
+#      uses: appleboy/ssh-action@master
+#      with:
+#        host: ${{ secrets.EC2_HOST }}
+#        username: ${{ secrets.EC2_USER }}
+#        key: ${{ secrets.EC2_SSH_KEY }}
+#        script: |
+#          cd ~/app
+#          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+#          docker compose --env-file deploy.env pull
+#          docker compose --env-file deploy.env up -d
+#          rm deploy.env # Clean up env file after start
